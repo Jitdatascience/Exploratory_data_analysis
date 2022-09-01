@@ -1,0 +1,352 @@
+---
+title: "Exploratory_analysis"
+author: "Biswajit Chowdhury"
+date: "28/07/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+- Here, I used the Heart disease data set from UCI machine learning repository. The dataset contains 14 variables and 303 observations.
+
+# Load library
+```{r}
+library(tidyverse)
+
+```
+
+# Reading data file
+
+```{r}
+heart_data<-read.csv("heart.csv")
+
+# see the data set
+head(heart_data) # first 6 rows of the data set
+tail(heart_data) # last 6 rows of the data set
+
+dim(heart_data) # no. of rows and columns
+
+colnames(heart_data) # variable names
+
+# change the column names 
+names(heart_data) <- c("age", "sex", "chest_pain", "resting_bp","cholestrol",
+                       "fasting_sugar", "resting_ECG", "max_heart_rate", 
+                       "exercise_agina", "oldpeak", "slope", "number_major_vessels",
+                       "thal", "disease_status")
+
+
+```
+
+
+# preprocessing data for the exploratory analysis
+
+```{r}
+# Variable sex is coded 0 and 1. We want to include 0=F and 1=M
+
+heart_data$sex <- factor(heart_data$sex,
+      levels = c(0,1),
+      labels = c("F", "M"))
+
+# Change variable chest_pain into four categories
+heart_data$chest_pain <- factor(heart_data$chest_pain,
+      levels = c(1,2,3,0),
+      labels = c("Typical_angina", "Atypical_angina", "Nonanginal_pain", "Assymptomatic"))
+
+# Change variable fasting_sugar to high and low
+
+heart_data$fasting_sugar <- factor(heart_data$fasting_sugar,
+      levels = c(0,1),
+      labels = c("Low", "High"))
+
+# Change resting_ECG into normal, mild and severe
+
+heart_data$resting_ECG <- factor(heart_data$resting_ECG,
+      levels = c(0,1,2),
+      labels = c("Normal", "Mild", "Severe"))
+
+# Change excercise_angina into "yes" and "no"
+
+heart_data$exercise_agina <- factor(heart_data$exercise_agina,
+      levels = c(0,1),
+      labels = c("No", "Yes"))
+
+# Similary we also change the labels for number of major vessels and thal
+
+
+heart_data$number_major_vessels <- factor(heart_data$number_major_vessels,
+      levels = c(0,1,2,3,4),
+      labels = c("None", "One", "Two", "Three", "Four"))
+
+heart_data$thal <- factor(heart_data$thal,
+      levels = c(1, 2,3),
+      labels = c("Normal", "Fixed_defect", "Reversible_defect"))
+
+# Finally change the angiographic disease status to normal and disease
+
+heart_data$disease_status <- factor(heart_data$disease_status,
+      levels = c(0,1),
+      labels = c("Normal", "Disease"))
+
+write.csv(heart_data, "UCI_heart_data.csv")
+head(heart_data,3)
+```
+
+# Explore the quantitative variables
+
+# Histogram and density plot for the quantitative variables 
+```{r}
+par(mfrow=c(3,2))
+hist(heart_data$age,
+     col="white",
+     border="black",
+     prob = TRUE,
+     xlab = "age",
+     main = "distribution of age")
+  lines(density(heart_data$age),
+      lwd = 2,
+      col = "red")
+
+hist(log(heart_data$age),
+     col="white",
+     border="black",
+     prob = TRUE,
+     xlab = "age",
+     main = "distribution of log(age)")
+  lines(density(log(heart_data$age)),
+      lwd = 2,
+      col = "red")
+  
+hist(heart_data$resting_bp,
+     col="white",
+     border="black",
+     prob = TRUE,
+     xlab = "resting_bp (mmHg)",
+     main = "distribution of resting_bp")
+  lines(density(heart_data$resting_bp),
+      lwd = 2,
+      col = "red")
+
+hist(log(heart_data$resting_bp),
+     col="white",
+     border="black",
+     prob = TRUE,
+     xlab = "resting_bp (mmHg)",
+     main = "distribution of log(resting_bp)")
+  lines(density(log(heart_data$resting_bp)),
+      lwd = 2,
+      col = "red")
+  
+hist(heart_data$cholestrol,
+     col="white",
+     border="black",
+     prob = TRUE,
+     xlab = "cholestrol levels (mg/dl)",
+     main = "distribution of cholestrol levels")
+  lines(density(heart_data$cholestrol),
+      lwd = 2,
+      col = "red")
+ 
+ hist(log(heart_data$cholestrol),
+     col="white",
+     border="black",
+     prob = TRUE,
+     xlab = "cholestrol levels (mg/dl)",
+     main = "distribution of log(cholestrol levels)")
+  lines(density(log(heart_data$cholestrol)),
+      lwd = 2,
+      col = "red")
+
+  hist(heart_data$max_heart_rate,
+     col="white",
+     border="black",
+     prob = TRUE,
+     xlab = "max_heart_rate ",
+     main = "distribution of max_heart_rate")
+  lines(density(heart_data$max_heart_rate),
+      lwd = 2,
+      col = "red") 
+  
+  hist(log(heart_data$max_heart_rate),
+     col="white",
+     border="black",
+     prob = TRUE,
+     xlab = "max_heart_rate ",
+     main = "distribution of max_heart_rate")
+  lines(density(log(heart_data$max_heart_rate)),
+      lwd = 2,
+      col = "red") 
+```
+
+
+# Shapiro-Wilk test for checking the normal distribution
+- null hypothesis: the data are normally distributed
+- alternative hypothesis: the data are not normally distributed
+
+
+```{r}
+# normality test for cholestrol
+shapiro.test(heart_data$cholestrol)
+
+# normality test for heart ratel
+shapiro.test(heart_data$max_heart_rate)
+```
+ - from the above p-value, we can say the data are not normally distributed.
+ 
+## Visual inspection of the data normality using Q-Q plots (quantile-quantile plots). Q-Q plot draws the correlation between a given sample and the normal distribution.
+
+```{r}
+library(ggpubr)
+ggqqplot(heart_data$cholestrol, ylab="Cholestrol")
+
+ggqqplot(heart_data$max_heart_rate, ylab="Maximum heart rate")
+```
+
+## Pearson correlation test
+
+- Correlation between cholestrol and heart_rate
+
+```{r}
+# we can use three different methods: pearson, kendal, spearman
+correlation<-cor.test(heart_data$cholestrol, heart_data$max_heart_rate, method="pearson")
+correlation
+```
+
+p-value is greater than the significance level alpha =0.05. Therefore, we can conclude that above two variables are not significantly correlated with a correlation coefficiengt of -0.009 and the p-value of 0.8632.
+```{r}
+library(ggpubr)
+
+# Presence of angiographic disease status among males and females due to age  
+
+ggboxplot(heart_data, x="disease_status", y="age",
+          xlab="angiographic disease status", ylab= "Age (years)",
+          title= "disease_status with age and sex",
+          color = "sex", # color by gender
+          add = c("jitter", "mean_sd")) # show the distribution of the observed values
+
+
+# Presence of angiographic disease status among males and females due to resting blood pressue  
+
+ggboxplot(heart_data, x = "disease_status", y = "resting_bp", 
+          xlab = "Presence of angiographic disease", ylab = "Resting blood pressue (mm Hg)", 
+          title = "Resting blood pressue and angiographic disease status",
+          color = "sex", add = c("jitter", "mean_sd"))
+```
+
+
+```{r}
+#par(mfrow=c(1,2))
+# Changes of chlestreol level between angiographic disease status and normal people  
+
+ggboxplot(heart_data, x = "disease_status", y = "cholestrol", 
+          xlab = "Presence of angiographic disease", ylab = "Cholestoral level (mg/dl)",
+          title = "Relationship between angiographic disease status and serum cholestoral",
+          color = "sex", add = c("jitter", "mean_sd")) 
+
+# Chnages of heart rate between normal and angiographic disease 
+
+ggboxplot(heart_data, x = "disease_status", y = "max_heart_rate", 
+          xlab = "Presence of angiographic disease", ylab = "Heart rate", 
+          title = "Relationship between angiographic disease status and heart rate",
+          color = "sex", add = c("jitter", "mean_sd")) 
+```
+
+
+
+
+# Explore the categorical variables
+
+- Calculate the frequency of categorical variables
+
+```{r}
+# Counts for the sex categories
+
+table(heart_data$sex)
+
+# cross classification for sex with angiographic disease status
+table(heart_data$disease_status, heart_data$sex)
+
+```
+
+- Assess subjects by disease type, gender, fasting sugar and chest pain
+
+```{r}
+# Multidimensional tables based on three or more categorical variables
+
+table1 <- table(heart_data$disease_status, heart_data$sex, 
+                 heart_data$fasting_sugar)
+
+ftable(table1) # print the results with more attractively
+  
+table2 <- table(heart_data$disease_status, heart_data$sex, 
+                 heart_data$chest_pain)
+
+ftable(table2)
+```
+
+# Visualization of the categorical variables
+
+```{r}
+# Here we assess the number of subjects diagnosed with chest pain
+ggplot(heart_data, aes(x = chest_pain, fill=chest_pain)) +
+        geom_bar() +  xlab('Level of chest pain') + ylab("Count") 
+
+```
+
+- To easy to digest of the above image, we can make it in desending order. For this we will make a functions that sort the variables crosponding their total counts
+
+```{r}
+# re-order levels
+reorder_size <- function(x) {
+        factor(x, levels = names(sort(table(x), decreasing = TRUE)))
+}
+
+ggplot(heart_data, aes(x = reorder_size(chest_pain), fill=chest_pain)) +
+        geom_bar() +
+  xlab('Level of chest pain') + ylab("Count")
+```
+
+# Changes of chest pain with sex and disease status
+
+```{r}
+ggplot(heart_data, aes(x = reorder_size(chest_pain), fill=chest_pain)) +
+        geom_bar() +
+  xlab('Level of chest pain') +
+  facet_grid(disease_status~ sex)+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+# Number of major vessels with gender and heart disease
+
+```{r}
+ggplot(heart_data, aes(x = reorder_size(number_major_vessels), fill=number_major_vessels)) +
+        geom_bar() +
+  xlab('Number of major vessels') +
+  facet_grid(disease_status~ sex) +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+# Proportion/Percentage
+
+```{r}
+# percentages of gender categories
+table1<- table(heart_data$sex)
+prop.table(table1)
+
+# percentage of cross classication counts for gender by disease types
+
+table2<- table(heart_data$disease_status, heart_data$sex)
+prop.table(table2)
+
+round(prop.table(table2), 3)*100
+```
+
+# co-relation plot between quantitative variables
+
+```{r}
+library(corrplot)
+
+corrplot(cor(heart_data[, c(1,4,5,8,10)]), type="upper")
+```
+
